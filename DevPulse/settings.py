@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'DevPulseApp.apps.DevpulseappConfig',
+    "rest_framework",
+    "rest_framework_api_key",
 ]
 
 MIDDLEWARE = [
@@ -104,7 +106,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework_api_key.permissions.HasAPIKey",
+    ]
+}
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 

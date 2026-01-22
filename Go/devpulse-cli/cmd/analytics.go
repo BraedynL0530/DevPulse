@@ -5,6 +5,11 @@ package cmd
 
 import (
 	"fmt"
+	"math"
+	"net/http"
+	"sort"
+	"sync"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -15,30 +20,123 @@ var analyticsCmd = &cobra.Command{
 	Short: "Gets latency and throughput",
 	Long:  `long output for later`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("analytics called")
-		//if interval <= 0 {
-		//collectAndSendMetrics() // single run
-		//} else {
-		//    ticker := time.NewTicker(time.Duration(interval) * time.Second)
-		//    defer ticker.Stop()
-		//    for {
-		//collectAndSendMetrics()
-		// <-ticker.C
-		//    }
-		//}
+
+		if test == true {
+			metrics := collectMetrics(url)
+			fmt.Println("Metrics:", metrics)
+		}
+
+		if interval <= 0 {
+			collectAndSendMetrics(url) // single run
+		} else {
+			ticker := time.NewTicker(time.Duration(interval) * time.Second)
+			defer ticker.Stop()
+			for range ticker.C {
+				collectAndSendMetrics(url)
+			}
+		}
 	},
+}
+
+func collectAndSendMetrics(url string) {
+	metrics := collectMetrics(url)
+	fmt.Println(metrics) //tempt to get rid of error that pmo
+}
+
+type RunMetrics struct {
+	AvgLatency   time.Duration `json:"avg_latency_ms"` //ns rn convert to ms
+	P95Latency   time.Duration `json:"p95_latency_ms"`
+	EffectiveRPS float64       `json:"effective_rps"`
+	Success      int           `json:"success"`
+	Errors       int           `json:"errors"`
+	Total        int           `json:"total"`
+}
+
+func collectMetrics(url string) RunMetrics {
+	concurrency := 10
+	duration := 5 * time.Second
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var totalRequest = 0
+	var totalErrors = 0
+
+	start := time.Now()
+	deadline := start.Add(duration)
+	latencies := []time.Duration{}
+
+	for i := 0; i < concurrency; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for time.Now().Before(deadline) {
+				reqStart := time.Now()
+				resp, err := http.Get(url)
+
+				if err != nil {
+					continue
+				}
+				if resp.StatusCode >= 400 {
+					resp.Body.Close()
+					mu.Lock()
+					totalErrors++
+					mu.Unlock()
+					continue
+				}
+
+				latency := time.Since(reqStart)
+				resp.Body.Close()
+
+				mu.Lock()
+				latencies = append(latencies, latency)
+				totalRequest++
+				mu.Unlock()
+			}
+		}()
+
+	}
+
+	wg.Wait()
+	elapsed := time.Since(start)
+	Success := totalRequest - totalErrors
+	Errors := totalErrors
+	EffectiveRPS := float64(Success) / elapsed.Seconds()
+
+	sort.Slice(latencies, func(i, j int) bool {
+		return latencies[i] < latencies[j]
+	})
+
+	if len(latencies) > 0 {
+		P95Index := int(math.Ceil(0.95*float64(len(latencies)))) - 1
+		P95latency = latencies[P95Index]
+		AvgLatency = sum(latencies) / totalRequest
+
+	}
+
+	return RunMetrics{
+		AvgLatency:   AvgLatency,
+		P95Latency:   P95latency,
+		EffectiveRPS: EffectiveRPS,
+		Success:      Success,
+		Errors:       Errors,
+		Total:        totalRequest + totalErrors,
+	}
+
 }
 
 var latencyThreshold int
 var export string
 var interval int
 var apikey string
+var url string
+var test bool
 
 func init() {
 	rootCmd.AddCommand(analyticsCmd)
-	analyticsCmd.Flags().IntVarP(&latencyThreshold, "latency-threshold", "lt", 200, "Latency threshold for alert Defualts 200")
-	analyticsCmd.Flags().StringVarP(&export, "Export", "e", "json", "exports DB as a Json or Strings/CSV")
+	analyticsCmd.Flags().IntVarP(&latencyThreshold, "latency-threshold", "l", 200, "Latency threshold for alert Defualts 200")
+	analyticsCmd.Flags().StringVarP(&export, "export", "e", "json", "exports DB as a Json or CSV")
+	analyticsCmd.Flags().BoolVarP(&test, "test", "t", false, "dosent send just collects and prints")
 	analyticsCmd.Flags().IntVarP(&interval, "interval", "i", 0, "interval of automatic request, defult 0(off)")
 	analyticsCmd.Flags().StringVarP(&apikey, "api-key", "a", "", "allows data to be stored and dashboard use") // Check config first if nil both require apikey, then check if ledgit
+	//analyticsCmd.Flags().StringVarP(&url, "url", "u", "", "Add url to your site")
 
 }

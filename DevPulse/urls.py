@@ -16,7 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from DevPulseApp import views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('api.devpulse/get-apikeys', views.getApiKey),
+    path('api.devpulse/add-history', views.addHistory),
+    path('api.devpulse/get-history',views.fetchHistory)
 ]

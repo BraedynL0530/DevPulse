@@ -40,12 +40,12 @@ var analyticsCmd = &cobra.Command{
 
 func collectAndSendMetrics(url string) {
 	metrics := collectMetrics(url)
-	fmt.Println(metrics) //tempt to get rid of error that pmo
+	fmt.Println(metrics) //temp to get rid of error that pmo
 }
 
 type RunMetrics struct {
-	AvgLatency   time.Duration `json:"avg_latency_ms"` //ns rn convert to ms
-	P95Latency   time.Duration `json:"p95_latency_ms"`
+	AvgLatency   float64 `json:"avg_latency_ms"` 
+	P95Latency   float64 `json:"p95_latency_ms"`
 	EffectiveRPS float64       `json:"effective_rps"`
 	Success      int           `json:"success"`
 	Errors       int           `json:"errors"`
@@ -105,10 +105,12 @@ func collectMetrics(url string) RunMetrics {
 		return latencies[i] < latencies[j]
 	})
 
+	var AvgLatency time.Duration
+	var P95latency time.Duration
 	if len(latencies) > 0 {
 		P95Index := int(math.Ceil(0.95*float64(len(latencies)))) - 1
 		P95latency = latencies[P95Index]
-		AvgLatency = sum(latencies) / totalRequest
+		AvgLatency = sum(latencies) / time.Duration(len(latencies))
 
 	}
 
@@ -122,6 +124,35 @@ func collectMetrics(url string) RunMetrics {
 	}
 
 }
+
+type History struct{
+	ProjectName string `json:"project_name"`
+	ProjectId string `json:"project_id"`
+	AvgLatency   float64 `json:"avg_latency_ms"` //ns rn convert to ms
+	P95Latency   float64 `json:"p95_latency_ms"`
+	EffectiveRPS float64       `json:"effective_rps"`
+	Success      int           `json:"success"`
+	Errors       int           `json:"errors"`
+	Total        int           `json:"total"`
+}
+
+func history() History{
+
+}
+
+func exportHistory(url string, history func){
+
+
+}
+
+func sum(durations []time.Duration) time.Duration {
+	var total time.Duration
+	for _, d := range durations {
+		total += d
+	}
+	return total
+}
+
 
 var latencyThreshold int
 var export string
@@ -137,6 +168,7 @@ func init() {
 	analyticsCmd.Flags().BoolVarP(&test, "test", "t", false, "dosent send just collects and prints")
 	analyticsCmd.Flags().IntVarP(&interval, "interval", "i", 0, "interval of automatic request, defult 0(off)")
 	analyticsCmd.Flags().StringVarP(&apikey, "api-key", "a", "", "allows data to be stored and dashboard use") // Check config first if nil both require apikey, then check if ledgit
-	//analyticsCmd.Flags().StringVarP(&url, "url", "u", "", "Add url to your site")
+	analyticsCmd.Flags().StringVarP(&url, "url", "u", "", "Add url to your site")
 
 }
+

@@ -22,3 +22,19 @@ class ProjectAPIKey(AbstractAPIKey):
     last_used_ip = models.GenericIPAddressField(null=True, blank=True)
     last_used = models.DateTimeField(null=True, blank=True)
     description = models.TextField(blank=True)
+
+class ProjectMetrics(models.Model):
+    project = models.ForeignKey(Project,on_delete=models.CASCADE,related_name="metrics")
+    errors = models.IntegerField(default=0)
+    successes = models.IntegerField(default=0)
+    total_requests = models.IntegerField(default=0)
+    effective_Rps = models.FloatField(null=True, blank=True)
+    avg_latency = models.FloatField(null=True, blank=True)
+    p95_latency = models.FloatField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    bucket_size_seconds = models.IntegerField()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["project", "timestamp"]),
+        ]

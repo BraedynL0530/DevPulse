@@ -111,6 +111,9 @@ REST_FRAMEWORK = {
         "rest_framework_api_key.permissions.HasAPIKey",
     ]
 }
+
+API_KEY_CUSTOM_HEADER = "HTTP_API_KEY"
+
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 

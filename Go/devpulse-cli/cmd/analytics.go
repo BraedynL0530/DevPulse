@@ -4,6 +4,8 @@ Copyright © 2026 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"math"
 	"net/http"
@@ -38,18 +40,41 @@ var analyticsCmd = &cobra.Command{
 	},
 }
 
-func collectAndSendMetrics(url string) {
+func collectAndSendMetrics(url, apikey string) {
+	sendApi := "http://127.0.0.1:8000/api.devpulse/add-history" // Future me use env later for deployment (no local host:8000)
 	metrics := collectMetrics(url)
-	fmt.Println(metrics) //temp to get rid of error that pmo
+	body, _ := json.Marshal(metrics)
+
+	req, err := http.NewRequest(
+		http.MethodPost,
+		sendApi, // Link not the best naming
+		bytes.NewBuffer(body),
+	)
+
+	if err != nil {
+		return
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("HTTP_API_KEY", apiKey)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return
+	}
+
+	defer resp.Body.Close()
 }
 
 type RunMetrics struct {
-	AvgLatency   float64 `json:"avg_latency_ms"` 
+	AvgLatency   float64 `json:"avg_latency_ms"`
 	P95Latency   float64 `json:"p95_latency_ms"`
-	EffectiveRPS float64       `json:"effective_rps"`
-	Success      int           `json:"success"`
-	Errors       int           `json:"errors"`
-	Total        int           `json:"total"`
+	EffectiveRPS float64 `json:"effective_rps"`
+	Success      int     `json:"success"`
+	Errors       int     `json:"errors"`
+	Total        int     `json:"total"`
 }
 
 func collectMetrics(url string) RunMetrics {
@@ -115,8 +140,8 @@ func collectMetrics(url string) RunMetrics {
 	}
 
 	return RunMetrics{
-		AvgLatency:   AvgLatency,
-		P95Latency:   P95latency,
+		AvgLatency:   float64(AvgLatency),
+		P95Latency:   float64(P95latency),
 		EffectiveRPS: EffectiveRPS,
 		Success:      Success,
 		Errors:       Errors,
@@ -125,23 +150,22 @@ func collectMetrics(url string) RunMetrics {
 
 }
 
-type History struct{
-	ProjectName string `json:"project_name"`
-	ProjectId string `json:"project_id"`
+type History struct {
+	ProjectName  string  `json:"project_name"`
+	ProjectId    string  `json:"project_id"`
 	AvgLatency   float64 `json:"avg_latency_ms"` //ns rn convert to ms
 	P95Latency   float64 `json:"p95_latency_ms"`
-	EffectiveRPS float64       `json:"effective_rps"`
-	Success      int           `json:"success"`
-	Errors       int           `json:"errors"`
-	Total        int           `json:"total"`
+	EffectiveRPS float64 `json:"effective_rps"`
+	Success      int     `json:"success"`
+	Errors       int     `json:"errors"`
+	Total        int     `json:"total"`
 }
 
-func history() History{
+func history() History {
 
 }
 
-func exportHistory(url string, history func){
-
+func exportHistory(url string, history func()) {
 
 }
 
@@ -152,7 +176,6 @@ func sum(durations []time.Duration) time.Duration {
 	}
 	return total
 }
-
 
 var latencyThreshold int
 var export string
@@ -171,4 +194,3 @@ func init() {
 	analyticsCmd.Flags().StringVarP(&url, "url", "u", "", "Add url to your site")
 
 }
-

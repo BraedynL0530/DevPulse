@@ -20,6 +20,6 @@ from DevPulseApp import views
 
 urlpatterns = [
     path('api.devpulse/get-apikeys', views.getApiKey),
-    path('api.devpulse/add-history', views.addHistory),
+    path('api.devpulse/add-history', views.addHistory), #log
     path('api.devpulse/get-history',views.fetchHistory)
 ]

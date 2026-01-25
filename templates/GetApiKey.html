@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>API Key Generator</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            padding: 40px;
+        }
+
+        .key-box {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        input {
+            width: 320px;
+            padding: 10px;
+            font-family: monospace;
+        }
+
+        button {
+            padding: 10px 14px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <button id="generateBtn">Generate API Key</button>
+
+    <div class="key-box" style="display:none;" id="keyContainer">
+        <input id="apiKey" readonly />
+        <button id="copyBtn">Copy</button>
+    </div>
+
+    <script>
+        const generateBtn = document.getElementById("generateBtn");
+        const keyContainer = document.getElementById("keyContainer");
+        const apiKeyInput = document.getElementById("apiKey");
+        const copyBtn = document.getElementById("copyBtn");
+
+        let hasFetched = false;
+
+        generateBtn.addEventListener("click", async () => {
+            if (hasFetched) return; // prevents re-fetch spam
+
+            try {
+                const res = await fetch("api.devpulse/generate-key"); // change endpoint
+                const data = await res.json();
+
+                apiKeyInput.value = data.api_key;
+                keyContainer.style.display = "flex";
+                hasFetched = true;
+            } catch (err) {
+                alert("Failed to generate API key");
+                console.error(err);
+            }
+        });
+
+        copyBtn.addEventListener("click", () => {
+            navigator.clipboard.writeText(apiKeyInput.value);
+            copyBtn.textContent = "Copied!";
+            setTimeout(() => copyBtn.textContent = "Copy", 1200);
+        });
+    </script>
+
+</body>
+</html>

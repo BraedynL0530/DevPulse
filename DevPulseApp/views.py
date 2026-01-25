@@ -4,8 +4,11 @@ from rest_framework_api_key.models import APIKey
 import json
 from models import ProjectMetrics
 def getApiKey(request):
-    api_key, key = APIKey.objects.create_key(name="api_keys")
+    return render(request, "GetApiKey.html")
 
+def generateApiKey(request):
+    api_key, key = APIKey.objects.create_key(name="api_keys")
+    return JsonResponse({"key": key})
 def addHistory(request):
     if request.method == "POST":
         data = json.loads(request.body)
@@ -34,5 +37,3 @@ def fetchHistory(request):
 
     return JsonResponse(data, safe=False)
 
-def getApiKey(request):
-    return None

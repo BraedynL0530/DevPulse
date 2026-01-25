@@ -21,8 +21,8 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		url := "http://127.0.0.1:8000/api.devpulse/get-apikeys" // Placeholder
-		if err := browser.OpenURL(url); err != nil {            // This function handles cross-platform differences for you
+		url := "http://127.0.0.1:8000/devpulse/get-apikeys" // Placeholder
+		if err := browser.OpenURL(url); err != nil {        // This function handles cross-platform differences for you
 			log.Fatalf("Error opening URL in browser: %v", err)
 		}
 	},

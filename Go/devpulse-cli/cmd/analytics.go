@@ -161,11 +161,7 @@ type History struct {
 	Total        int     `json:"total"`
 }
 
-func history() History {
-
-}
-
-func exportHistory(url string, history func()) {
+func exportHistory() {
 
 }
 

@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import render
 from rest_framework_api_key.models import APIKey
 import json
@@ -16,4 +17,22 @@ def addHistory(request):
 
 
 def fetchHistory(request):
+    modelData = ProjectMetrics.objects.all()
+
+    data = []
+    for m in modelData:
+        data.append({
+            "project_name": m.project_name,
+            "project_id": m.project_id,
+            "avg_latency_ms": m.avg_latency_ms,
+            "p95_latency_ms": m.p95_latency_ms,
+            "effective_rps": m.effective_rps,
+            "success": m.success,
+            "errors": m.errors,
+            "total": m.total,
+        })
+
+    return JsonResponse(data, safe=False)
+
+def getApiKey(request):
     return None

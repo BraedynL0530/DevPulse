@@ -14,6 +14,7 @@ class OrganizationAPIKey(AbstractAPIKey):
 
 class Project(models.Model):
     name = models.CharField(max_length=128)
+    id = models.CharField(max_length=128)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     active = models.BooleanField(default=True)
 

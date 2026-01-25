@@ -1,12 +1,12 @@
 /*
 Copyright © 2026 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
 import (
-	"fmt"
+	"log"
 
+	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 )
 
@@ -21,20 +21,13 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("getKey called")
+		url := "http://127.0.0.1:8000/api.devpulse/get-apikeys" // Placeholder
+		if err := browser.OpenURL(url); err != nil {            // This function handles cross-platform differences for you
+			log.Fatalf("Error opening URL in browser: %v", err)
+		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(getKeyCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// getKeyCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// getKeyCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

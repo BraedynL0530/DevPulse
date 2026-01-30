@@ -29,7 +29,6 @@ class ProjectMetrics(models.Model):
     errors = models.IntegerField(default=0)
     successes = models.IntegerField(default=0)
     total_requests = models.IntegerField(default=0)
-    effective_Rps = models.FloatField(null=True, blank=True)
     avg_latency = models.FloatField(null=True, blank=True)
     p95_latency = models.FloatField(null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)

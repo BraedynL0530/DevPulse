@@ -29,12 +29,12 @@ var analyticsCmd = &cobra.Command{
 		}
 
 		if interval <= 0 {
-			collectAndSendMetrics(url) // single run
+			collectAndSendMetrics(url, apikey) // single run
 		} else {
 			ticker := time.NewTicker(time.Duration(interval) * time.Second)
 			defer ticker.Stop()
 			for range ticker.C {
-				collectAndSendMetrics(url)
+				collectAndSendMetrics(url, apikey)
 			}
 		}
 	},
@@ -56,7 +56,7 @@ func collectAndSendMetrics(url, apikey string) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("HTTP_API_KEY", apiKey)
+	req.Header.Set("HTTP_API_KEY", apikey)
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
@@ -69,12 +69,11 @@ func collectAndSendMetrics(url, apikey string) {
 }
 
 type RunMetrics struct {
-	AvgLatency   float64 `json:"avg_latency_ms"`
-	P95Latency   float64 `json:"p95_latency_ms"`
-	EffectiveRPS float64 `json:"effective_rps"`
-	Success      int     `json:"success"`
-	Errors       int     `json:"errors"`
-	Total        int     `json:"total"`
+	AvgLatency float64 `json:"avg_latency_ms"`
+	P95Latency float64 `json:"p95_latency_ms"`
+	Success    int     `json:"success"`
+	Errors     int     `json:"errors"`
+	Total      int     `json:"total"`
 }
 
 func collectMetrics(url string) RunMetrics {
@@ -121,10 +120,8 @@ func collectMetrics(url string) RunMetrics {
 	}
 
 	wg.Wait()
-	elapsed := time.Since(start)
 	Success := totalRequest - totalErrors
 	Errors := totalErrors
-	EffectiveRPS := float64(Success) / elapsed.Seconds()
 
 	sort.Slice(latencies, func(i, j int) bool {
 		return latencies[i] < latencies[j]
@@ -140,25 +137,23 @@ func collectMetrics(url string) RunMetrics {
 	}
 
 	return RunMetrics{
-		AvgLatency:   float64(AvgLatency),
-		P95Latency:   float64(P95latency),
-		EffectiveRPS: EffectiveRPS,
-		Success:      Success,
-		Errors:       Errors,
-		Total:        totalRequest + totalErrors,
+		AvgLatency: float64(AvgLatency) * 1e-6,
+		P95Latency: float64(P95latency) * 1e-6,
+		Success:    Success,
+		Errors:     Errors,
+		Total:      totalRequest + totalErrors,
 	}
 
 }
 
 type History struct {
-	ProjectName  string  `json:"project_name"`
-	ProjectId    string  `json:"project_id"`
-	AvgLatency   float64 `json:"avg_latency_ms"` //ns rn convert to ms
-	P95Latency   float64 `json:"p95_latency_ms"`
-	EffectiveRPS float64 `json:"effective_rps"`
-	Success      int     `json:"success"`
-	Errors       int     `json:"errors"`
-	Total        int     `json:"total"`
+	ProjectName string  `json:"project_name"`
+	ProjectId   string  `json:"project_id"`
+	AvgLatency  float64 `json:"avg_latency_ms"`
+	P95Latency  float64 `json:"p95_latency_ms"`
+	Success     int     `json:"success"`
+	Errors      int     `json:"errors"`
+	Total       int     `json:"total"`
 }
 
 func exportHistory() {
@@ -185,7 +180,7 @@ func init() {
 	analyticsCmd.Flags().IntVarP(&latencyThreshold, "latency-threshold", "l", 200, "Latency threshold for alert Defualts 200")
 	analyticsCmd.Flags().StringVarP(&export, "export", "e", "json", "exports DB as a Json or CSV")
 	analyticsCmd.Flags().BoolVarP(&test, "test", "t", false, "dosent send just collects and prints")
-	analyticsCmd.Flags().IntVarP(&interval, "interval", "i", 0, "interval of automatic request, defult 0(off)")
+	analyticsCmd.Flags().IntVarP(&interval, "interval", "i", 0, "interval(seconds) of automatic request, off by defualt ")
 	analyticsCmd.Flags().StringVarP(&apikey, "api-key", "a", "", "allows data to be stored and dashboard use") // Check config first if nil both require apikey, then check if ledgit
 	analyticsCmd.Flags().StringVarP(&url, "url", "u", "", "Add url to your site")
 

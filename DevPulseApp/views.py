@@ -20,19 +20,18 @@ def addHistory(request):
 
 
 def fetchHistory(request):
-    modelData = ProjectMetrics.objects.all()
+    model_data = ProjectMetrics.objects.all()
 
     data = []
-    for m in modelData:
+    for m in model_data:
         data.append({
             "project_name": m.project_name,
             "project_id": m.project_id,
-            "avg_latency_ms": m.avg_latency_ms,
-            "p95_latency_ms": m.p95_latency_ms,
-            "effective_rps": m.effective_rps,
-            "success": m.success,
+            "avg_latency_ms": m.avg_latency,
+            "p95_latency_ms": m.p95_latency,
+            "success": m.successes,
             "errors": m.errors,
-            "total": m.total,
+            "total": m.total_requests,
         })
 
     return JsonResponse(data, safe=False)

@@ -12,7 +12,6 @@ import (
 	"sort"
 	"sync"
 	"time"
-
 	"github.com/spf13/cobra"
 )
 

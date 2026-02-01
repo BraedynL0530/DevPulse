@@ -34,11 +34,15 @@ def addHistory(request):
         return HttpResponseForbidden("You are not authorized to view this page. Try checking your API key.")
     if request.method == "POST":
         data = json.loads(request.body)
-        ProjectMetrics.errors = data["errors"]
-        ProjectMetrics.successes = data["successes"]
-        ProjectMetrics.total_requests = data["total"]
-        ProjectMetrics.avg_latency = data["avg_latency_ms"]
-        ProjectMetrics.p95_latency = data["p95_latency_ms"]
+        ProjectMetrics.objects.create(
+            project=...,  # need to link to project
+            errors=data["errors"],
+            successes=data["success"],
+            total_requests=data["total"],
+            avg_latency=data["avg_latency_ms"],
+            p95_latency=data["p95_latency_ms"],
+            bucket_size_seconds=data["interval"] # Add in go too
+        )
 
 
 def fetchHistory(request):
@@ -49,7 +53,7 @@ def fetchHistory(request):
     data = []
     for m in model_data:
         data.append({
-            "project_name": m.project_name,
+            "project_name": m.project.name,
             "project_id": m.project_id,
             "avg_latency_ms": m.avg_latency,
             "p95_latency_ms": m.p95_latency,

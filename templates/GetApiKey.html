@@ -48,7 +48,7 @@
             if (hasFetched) return; // prevents re-fetch spam
 
             try {
-                const res = await fetch("api.devpulse/generate-key"); // change endpoint
+                const res = await fetch("api.devpulse/proxy-path"); // change endpoint
                 const data = await res.json();
 
                 apiKeyInput.value = data.api_key;

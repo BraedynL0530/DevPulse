@@ -1,9 +1,11 @@
 from django.urls import path
 from DevPulseApp import views
-
+import os
+from dotenv import load_dotenv
 urlpatterns = [
     path('devpulse/get-apikeys', views.getApiKey),
-    path("api.devpulse/generate-key", views.generateApiKey),
+    path("api.devpulse/proxy-path", views.generate),
+    path(os.getenv("API_KEY"), views.generateApiKey), # put endpoint inside env and modified the link
     path('api.devpulse/add-history', views.addHistory), #log
     path('api.devpulse/get-history',views.fetchHistory)
 ]

@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required
 from django.contrib.sites import requests
 from django.http import JsonResponse, HttpResponseForbidden
 from django.shortcuts import render
@@ -5,20 +6,25 @@ from rest_framework_api_key.models import APIKey
 import json
 from .models import ProjectMetrics, OrganizationAPIKey, Organization, User, OrganizationMember
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from django_ratelimit.decorators import ratelimit
 import os
 from django.contrib.auth import authenticate, login
 
 
+@login_required
 def getApiKey(request):
     return render(request, "GetApiKey.html")
 
 
+@login_required
 def generate(request): #proxy :3
     res = requests.post(
         os.getenv("API_KEY"), #generate api key
     )
     return JsonResponse(res.json())
 
+@login_required
+@ratelimit(key='user', rate='5/h', method='POST')
 def generateApiKey(request):
     try:
         org= 0#temp
@@ -29,7 +35,7 @@ def generateApiKey(request):
     except Exception as e:
         return JsonResponse({"error": str(e)})
 
-#TODO: ratelimiting
+
 @csrf_exempt
 def addHistory(request):
     if not request.api_key.organization.active:
@@ -71,6 +77,7 @@ def fetchHistory(request):
     except Exception as e:
         return JsonResponse({"error": str(e)})
 
+@login_required
 def dashboard(request):
     if not request.api_key.organization.active:
         return HttpResponseForbidden("You are not authorized to view this page. Try checking your API key.")

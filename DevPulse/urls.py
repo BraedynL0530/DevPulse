@@ -7,5 +7,7 @@ urlpatterns = [
     path("api.devpulse/proxy-path", views.generate),
     path(os.getenv("API_KEY"), views.generateApiKey), # put endpoint inside env and modified the link
     path('api.devpulse/add-history', views.addHistory), #log
-    path('api.devpulse/get-history',views.fetchHistory)
+    path('api.devpulse/get-history',views.fetchHistory),
+    path('devpulse/login', views.login_page),
+    path('api.devpulse/signup-login', views.signupLogin),
 ]

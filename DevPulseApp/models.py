@@ -34,6 +34,8 @@ class Project(models.Model):
     project_id = models.CharField(max_length=128, default=None)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
 
 class ProjectMetrics(models.Model):
     project = models.ForeignKey(Project,on_delete=models.CASCADE,related_name="metrics")
@@ -43,8 +45,6 @@ class ProjectMetrics(models.Model):
     avg_latency = models.FloatField(null=True, blank=True)
     p95_latency = models.FloatField(null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
-    bucket_size_seconds = models.IntegerField(default=None)
-
     class Meta:
         indexes = [
             models.Index(fields=["project", "timestamp"]),

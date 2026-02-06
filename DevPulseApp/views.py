@@ -4,7 +4,7 @@ from django.http import JsonResponse, HttpResponseForbidden
 from django.shortcuts import render
 from rest_framework_api_key.models import APIKey
 import json
-from .models import ProjectMetrics, OrganizationAPIKey, Organization, User, OrganizationMember
+from .models import ProjectMetrics, OrganizationAPIKey, Organization, User, OrganizationMember, Project
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django_ratelimit.decorators import ratelimit
 import os
@@ -17,7 +17,7 @@ def getApiKey(request):
 
 
 @login_required
-def generate(request): #proxy :3
+def generate(request): #proxy
     res = requests.post(
         os.getenv("API_KEY"), #generate api key
     )

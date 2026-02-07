@@ -1,8 +1,9 @@
-from django.urls import path
+from django.urls import path, include
 from DevPulseApp import views
 import os
 from dotenv import load_dotenv
 urlpatterns = [
+    path('accounts/', include('allauth.urls')),
     path('devpulse/get-apikeys', views.getApiKey),
     path("api.devpulse/proxy-path", views.generate),
     path(os.getenv("API_KEY"), views.generateApiKey), # put endpoint inside env and modified the link

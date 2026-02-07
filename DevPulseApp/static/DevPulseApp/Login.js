@@ -15,8 +15,9 @@ function getCookie(name) {
 }
 
 // Toggle API key field visibility
-const hasApiKeyCheckbox = document.getElementById('hasApiKey');
-const apiKeyGroup = document.getElementById('apiKeyGroup');
+// changed to invite code lazily
+const hasApiKeyCheckbox = document.getElementById('hasInviteCode');
+const apiKeyGroup = document.getElementById('inviteCodeGroup');
 
 hasApiKeyCheckbox.addEventListener('change', function() {
     if (this.checked) {
@@ -35,8 +36,8 @@ loginForm.addEventListener('submit', async function(e) {
 
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    const hasApiKey = document.getElementById('hasApiKey').checked;
-    const apiKey = hasApiKey ? document.getElementById('apiKey').value : null;
+    const hasApiKey = document.getElementById('hasInviteCode').checked;
+    const inviteCode = hasApiKey ? document.getElementById('inviteCode').value : null;
 
     // Clear previous errors
     errorMessage.classList.remove('show');
@@ -54,7 +55,7 @@ loginForm.addEventListener('submit', async function(e) {
             body: JSON.stringify({
                 email: email,
                 password: password,
-                api_key: apiKey
+                invite_code: inviteCode
             })
         });
 

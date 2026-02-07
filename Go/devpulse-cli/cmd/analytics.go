@@ -12,6 +12,7 @@ import (
 	"sort"
 	"sync"
 	"time"
+
 	"github.com/spf13/cobra"
 )
 
@@ -55,7 +56,7 @@ func collectAndSendMetrics(url, apikey string) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("HTTP_API_KEY", apikey)
+	req.Header.Set("API-Key", apikey)
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)

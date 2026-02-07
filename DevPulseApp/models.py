@@ -10,7 +10,7 @@ class User(AbstractUser):
 
 class Organization(models.Model):
     name = models.CharField(max_length=128)
-    owner = models.ForeignKey(User, related_name='owned_orgs', on_delete=models.CASCADE, default=None)
+    invite_code = models.CharField(max_length=32, unique=True)
     active = models.BooleanField(default=True)
 
 class OrganizationAPIKey(AbstractAPIKey):
@@ -19,6 +19,10 @@ class OrganizationAPIKey(AbstractAPIKey):
         on_delete=models.CASCADE,
         related_name="api_keys",
     )
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    name = models.CharField(max_length=100, default="Unnamed Key")  # "Production CLI", "Dev Environment"
+    last_used = models.DateTimeField(null=True, blank=True)
+
 class OrganizationMember(models.Model):
     ROLES = [
         ('owner', 'Owner'),

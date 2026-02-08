@@ -24,25 +24,25 @@ var analyticsCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if test == true {
-			metrics := collectMetrics(url)
+			metrics := collectMetrics(url, region)
 			fmt.Println("Metrics:", metrics)
 		}
 
 		if interval <= 0 {
-			collectAndSendMetrics(url, apikey) // single run
+			collectAndSendMetrics(url, region, apikey) // single run
 		} else {
 			ticker := time.NewTicker(time.Duration(interval) * time.Second)
 			defer ticker.Stop()
 			for range ticker.C {
-				collectAndSendMetrics(url, apikey)
+				collectAndSendMetrics(url, region, apikey)
 			}
 		}
 	},
 }
 
-func collectAndSendMetrics(url, apikey string) {
+func collectAndSendMetrics(url, region, apikey string) {
 	sendApi := "http://127.0.0.1:8000/api.devpulse/add-history" // Future me use env later for deployment (no local host:8000)
-	metrics := collectMetrics(url)
+	metrics := collectMetrics(url, region)
 	body, _ := json.Marshal(metrics)
 
 	req, err := http.NewRequest(
@@ -74,9 +74,10 @@ type RunMetrics struct {
 	Success    int     `json:"success"`
 	Errors     int     `json:"errors"`
 	Total      int     `json:"total"`
+	Location   string  `json:"location"`
 }
 
-func collectMetrics(url string) RunMetrics {
+func collectMetrics(url, region string) RunMetrics {
 	concurrency := 10
 	duration := 5 * time.Second
 	var wg sync.WaitGroup
@@ -142,6 +143,7 @@ func collectMetrics(url string) RunMetrics {
 		Success:    Success,
 		Errors:     Errors,
 		Total:      totalRequest + totalErrors,
+		Location:   region,
 	}
 
 }
@@ -154,6 +156,7 @@ type History struct {
 	Success     int     `json:"success"`
 	Errors      int     `json:"errors"`
 	Total       int     `json:"total"`
+	Location    string  `json:"location"`
 }
 
 func exportHistory() {
@@ -174,6 +177,7 @@ var interval int
 var apikey string
 var url string
 var test bool
+var region string // location just named diffrently
 
 func init() {
 	rootCmd.AddCommand(analyticsCmd)
@@ -182,6 +186,7 @@ func init() {
 	analyticsCmd.Flags().BoolVarP(&test, "test", "t", false, "dosent send just collects and prints")
 	analyticsCmd.Flags().IntVarP(&interval, "interval", "i", 0, "interval(seconds) of automatic request, off by defualt ")
 	analyticsCmd.Flags().StringVarP(&apikey, "api-key", "a", "", "allows data to be stored and dashboard use") // Check config first if nil both require apikey, then check if ledgit
-	analyticsCmd.Flags().StringVarP(&url, "url", "u", "", "Add url to your site")
+	analyticsCmd.Flags().StringVarP(&url, "url", "u", "", "Add url to your site/api")
+	analyticsCmd.Flags().StringVarP(&region, "region", "r", "", "Region ClI was used") // make defualt later once i make config cmd, and figure out how
 
 }

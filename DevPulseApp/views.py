@@ -63,7 +63,7 @@ def addHistory(request):
                 total_requests=data["total"],
                 avg_latency=data["avg_latency_ms"],
                 p95_latency=data["p95_latency_ms"],
-                bucket_size_seconds=data["interval"] # Add in go too
+                location=data["location"]
             )
         except Exception as e:
             return JsonResponse({"error": str(e)})
@@ -83,6 +83,7 @@ def fetchHistory(request):
                 "success": m.successes,
                 "errors": m.errors,
                 "total": m.total_requests,
+                "location": m.location
             })
 
         return JsonResponse(data, safe=False)

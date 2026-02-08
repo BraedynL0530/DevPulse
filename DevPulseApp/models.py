@@ -49,6 +49,7 @@ class ProjectMetrics(models.Model):
     avg_latency = models.FloatField(null=True, blank=True)
     p95_latency = models.FloatField(null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+    location = models.CharField(max_length=128, default=None)
     class Meta:
         indexes = [
             models.Index(fields=["project", "timestamp"]),

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevPulse - Dashboard</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'DevPulseApp/dashboard.css' %}">
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <div class="nav-content">
+            <h1 class="logo">DevPulse</h1>
+            <div class="nav-right">
+                <span class="org-name">{{ user.organization.name }}</span>
+                <div class="user-menu">
+                    <button class="user-btn" id="userMenuBtn">
+                        {{ user.email }}
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                            <path d="M6 8L2 4h8z"/>
+                        </svg>
+                    </button>
+                    <div class="dropdown-menu" id="userMenu">
+                        <a href="#" id="generateKeyBtn">Generate API Key</a>
+                        {% if is_admin %}
+                        <a href="#" id="viewInviteBtn">View Invite Code</a>
+                        <div class="divider"></div>
+                        {% endif %}
+                        <a href="/accounts/logout">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Projects Section -->
+        <section class="projects-section">
+            <div class="section-header">
+                <h2>Projects</h2>
+                {% if is_admin %}
+                <button class="btn-primary" id="createProjectBtn">+ New Project</button>
+                {% endif %}
+            </div>
+
+            <div class="projects-grid">
+                {% for project in projects %}
+                <div class="project-card" onclick="window.location.href='/devpulse/project/{{ project.project_id }}'">
+                    <div class="project-header">
+                        <div class="project-name">{{ project.name }}</div>
+                        {% if is_admin %}
+                        <div class="project-actions">
+                            <button class="actions-btn" onclick="event.stopPropagation(); toggleProjectActions('{{ project.project_id }}')">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                    <circle cx="8" cy="3" r="1.5"/>
+                                    <circle cx="8" cy="8" r="1.5"/>
+                                    <circle cx="8" cy="13" r="1.5"/>
+                                </svg>
+                            </button>
+                            <div class="project-dropdown" id="dropdown-{{ project.project_id }}">
+                                <button onclick="event.stopPropagation(); deleteProject('{{ project.project_id }}', '{{ project.name|escapejs }}')">Delete</button>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="project-id">ID: {{ project.project_id }}</div>
+                    <div class="project-stats">
+                        <div class="stat-item">
+                            <div class="stat-item-label">Total Requests</div>
+                            <div class="stat-item-value">{{ project.total_requests|default:0 }}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-item-label">Avg Latency</div>
+                            <div class="stat-item-value">{{ project.avg_latency|floatformat:1|default:"0" }}ms</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-item-label">Success</div>
+                            <div class="stat-item-value success">{{ project.total_success|default:0 }}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-item-label">Errors</div>
+                            <div class="stat-item-value error">{{ project.total_errors|default:0 }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <h3>No projects yet</h3>
+                    <p>{% if is_admin %}Create your first project to start monitoring{% else %}Ask an admin to create a project{% endif %}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <!-- Create Project Modal -->
+    <div class="modal" id="createProjectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Project</h3>
+                <button class="close-btn" id="closeCreateModal">&times;</button>
+            </div>
+            <form id="createProjectForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="projectName">Project Name</label>
+                        <input type="text" id="projectName" placeholder="My API" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="cancelCreate">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Project</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- API Key Modal -->
+    <div class="modal" id="apiKeyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>API Key Generated</h3>
+                <button class="close-btn" id="closeKeyModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="warning-text">⚠️ Save this key - you won't be able to see it again!</p>
+                <div class="key-display">
+                    <input type="text" id="generatedKey" readonly>
+                    <button class="btn-copy" id="copyKeyBtn">Copy</button>
+                </div>
+                <div class="key-usage">
+                    <p>Use this key in your CLI:</p>
+                    <code>devpulse analytics --url=https://your-api.com --api-key=YOUR_KEY</code>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" id="closeKeyModalBtn">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invite Code Modal -->
+    <div class="modal" id="inviteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Organization Invite Code</h3>
+                <button class="close-btn" id="closeInviteModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Share this code with team members to join your organization:</p>
+                <div class="key-display">
+                    <input type="text" id="inviteCode" value="{{ user.organization.invite_code }}" readonly>
+                    <button class="btn-copy" id="copyInviteBtn">Copy</button>
+                </div>
+                <div class="key-usage">
+                    <p>Team members can use this code during signup to join your organization.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" id="closeInviteModalBtn">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Delete Project</h3>
+                <button class="close-btn" id="closeDeleteModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong id="deleteProjectName"></strong>?</p>
+                <p class="warning-text">This will permanently delete all metrics data.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelDelete">Cancel</button>
+                <button class="btn-danger" id="confirmDelete">Delete Project</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'DevPulseApp/dashboard.js' %}"></script>
+
+    <!-- Pass Django context to JS -->
+    <script>
+        window.isAdmin = {{ is_admin|yesno:"true,false" }};
+        window.userEmail = "{{ user.email|escapejs }}";
+    </script>
+</body>
+</html>

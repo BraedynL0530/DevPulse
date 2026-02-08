@@ -8,7 +8,8 @@ urlpatterns = [
     path("api.devpulse/proxy-path", views.generate),
     path(os.getenv("API_KEY"), views.generateApiKey), # put endpoint inside env and modified the link
     path('api.devpulse/add-history', views.addHistory), #log
+    path('devpulse/dashboard/', views.dashboard, name='dashboard'),
     path('api.devpulse/get-history',views.fetchHistory),
-    path('devpulse/login', views.login_page),
+    path('devpulse/login', views.login_page, name='login'),
     path('api.devpulse/signup-login', views.signupLogin),
 ]

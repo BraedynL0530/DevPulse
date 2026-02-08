@@ -1,7 +1,8 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites import requests
+from django.db.models import Sum, Avg
 from django.http import JsonResponse, HttpResponseForbidden
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from rest_framework.decorators import permission_classes
 from rest_framework_api_key.models import APIKey
 import json
@@ -56,8 +57,9 @@ def addHistory(request):
     if request.method == "POST":
         data = json.loads(request.body)
         try:
+            project = Project.objects.get(id=data["project_id"])
             ProjectMetrics.objects.create(
-                project=...,  # need to link to project
+                project=project,
                 errors=data["errors"],
                 successes=data["success"],
                 total_requests=data["total"],
@@ -92,16 +94,39 @@ def fetchHistory(request):
 
 @login_required
 def dashboard(request):
+    user = request.user
+
+    if not user.organization:
+        return redirect('login')
+
+    # Get projects with aggregated metrics
+    projects = Project.objects.filter(
+        organization=user.organization,
+        active=True
+    ).annotate(
+        total_requests=Sum('metrics__total_requests'),
+        total_errors=Sum('metrics__errors'),
+        total_success=Sum('metrics__successes'),
+        avg_latency=Avg('metrics__avg_latency'),
+        p95_latency=Avg('metrics__p95_latency')
+    ).order_by('-created_at')
+
+    # Check if admin
     try:
-        user = request.user
+        member = OrganizationMember.objects.get(
+            user=user,
+            organization=user.organization
+        )
+        is_admin = member.role in ['owner', 'admin']
+    except OrganizationMember.DoesNotExist:
+        is_admin = False
 
-        if not user.organization:
-            return JsonResponse({"error": "You must be in an organization to view this page"}, status=400)
+    context = {
+        'projects': projects,
+        'is_admin': is_admin,
+    }
 
-        #will be used later for actual stuff like revoking keys, deleteing/ adding projs, etc
-        member = OrganizationMember.objects.get(user=user, organization=user.organization)
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
+    return render(request, 'dashboard.html', context)
 
 
 
@@ -151,7 +176,6 @@ def signupLogin(request):
                     )
                     org = Organization.objects.create(
                         name=f"{email}'s Organization",
-                        owner=user
                     )
                     user.organization = org
                     user.save()

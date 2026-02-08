@@ -24,25 +24,25 @@ var analyticsCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if test == true {
-			metrics := collectMetrics(url, region)
+			metrics := collectMetrics(url, region, projectId)
 			fmt.Println("Metrics:", metrics)
 		}
 
 		if interval <= 0 {
-			collectAndSendMetrics(url, region, apikey) // single run
+			collectAndSendMetrics(url, region, projectId, apikey) // single run
 		} else {
 			ticker := time.NewTicker(time.Duration(interval) * time.Second)
 			defer ticker.Stop()
 			for range ticker.C {
-				collectAndSendMetrics(url, region, apikey)
+				collectAndSendMetrics(url, region, projectId, apikey)
 			}
 		}
 	},
 }
 
-func collectAndSendMetrics(url, region, apikey string) {
+func collectAndSendMetrics(url, region, projectId, apikey string) {
 	sendApi := "http://127.0.0.1:8000/api.devpulse/add-history" // Future me use env later for deployment (no local host:8000)
-	metrics := collectMetrics(url, region)
+	metrics := collectMetrics(url, region, projectId)
 	body, _ := json.Marshal(metrics)
 
 	req, err := http.NewRequest(
@@ -69,6 +69,7 @@ func collectAndSendMetrics(url, region, apikey string) {
 }
 
 type RunMetrics struct {
+	ProjectId  string  `json:"project_id"`
 	AvgLatency float64 `json:"avg_latency_ms"`
 	P95Latency float64 `json:"p95_latency_ms"`
 	Success    int     `json:"success"`
@@ -77,7 +78,7 @@ type RunMetrics struct {
 	Location   string  `json:"location"`
 }
 
-func collectMetrics(url, region string) RunMetrics {
+func collectMetrics(url, region, project_id string) RunMetrics {
 	concurrency := 10
 	duration := 5 * time.Second
 	var wg sync.WaitGroup
@@ -138,6 +139,7 @@ func collectMetrics(url, region string) RunMetrics {
 	}
 
 	return RunMetrics{
+		ProjectId:  projectId,
 		AvgLatency: float64(AvgLatency) * 1e-6,
 		P95Latency: float64(P95latency) * 1e-6,
 		Success:    Success,
@@ -178,6 +180,7 @@ var apikey string
 var url string
 var test bool
 var region string // location just named diffrently
+var projectId string
 
 func init() {
 	rootCmd.AddCommand(analyticsCmd)
@@ -187,6 +190,7 @@ func init() {
 	analyticsCmd.Flags().IntVarP(&interval, "interval", "i", 0, "interval(seconds) of automatic request, off by defualt ")
 	analyticsCmd.Flags().StringVarP(&apikey, "api-key", "a", "", "allows data to be stored and dashboard use") // Check config first if nil both require apikey, then check if ledgit
 	analyticsCmd.Flags().StringVarP(&url, "url", "u", "", "Add url to your site/api")
-	analyticsCmd.Flags().StringVarP(&region, "region", "r", "", "Region ClI was used") // make defualt later once i make config cmd, and figure out how
+	analyticsCmd.Flags().StringVarP(&region, "region", "r", "", "Region ClI was used")          // make defualt later once i make config cmd, and figure out how
+	analyticsCmd.Flags().StringVarP(&projectId, "project-id", "p", "", "project id to send to") // add to config too
 
 }

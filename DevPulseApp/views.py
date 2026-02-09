@@ -1,7 +1,8 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites import requests
+import requests as r
 from django.db.models import Sum, Avg
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponseForbidden, HttpRequest
 from django.shortcuts import render, redirect
 from rest_framework.decorators import permission_classes
 from rest_framework_api_key.models import APIKey
@@ -10,7 +11,7 @@ import json
 from rest_framework_api_key.permissions import HasAPIKey
 
 from .models import ProjectMetrics, OrganizationAPIKey, Organization, User, OrganizationMember, Project
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from django.views.decorators.csrf import  csrf_exempt
 from django_ratelimit.decorators import ratelimit
 import os
 from django.contrib.auth import authenticate, login
@@ -23,7 +24,7 @@ def getApiKey(request):
 
 @login_required
 def generate(request): #proxy
-    res = requests.post(
+    res = r.post(
         os.getenv("API_KEY"), #generate api key
     )
     return JsonResponse(res.json())
@@ -128,7 +129,38 @@ def dashboard(request):
 
     return render(request, 'dashboard.html', context)
 
+def createProject(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        try:
+            project_id = 1
+            if Project.objects.exists():
+                project_id = Project.objects.latest('id').id + 1
+            project = Project.objects.create(
+                name=data["name"],
+                project_id=str(project_id),
+                organization=request.user.organization,
+                active=True
+            )
+            return JsonResponse({"success": True, "project_id": project.id})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
 
+def deleteProject(request):
+    if request.method != "DELETE":
+        data = json.loads(request.body)
+        user = request.user
+
+        if not user.organization:
+            return JsonResponse({'error': 'No organization'}, status=400)
+
+        isAdmin = ['owner', 'admin']
+        if request.user.organizationmember_set.filter(role__in=isAdmin).exists():
+            try:
+                Project.objects.get(id=data["project_id"], organization=user.organization).delete()
+                return JsonResponse({"success": True})
+            except Exception as e:
+                return JsonResponse({"error": str(e)}, status=400)
 
 def login_page(request):
     return render(request, 'login.html')

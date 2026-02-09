@@ -9,6 +9,8 @@ urlpatterns = [
     path(os.getenv("API_KEY"), views.generateApiKey), # put endpoint inside env and modified the link
     path('api.devpulse/add-history', views.addHistory), #log
     path('devpulse/dashboard/', views.dashboard, name='dashboard'),
+    path('api.devpulse/create-project', views.createProject),
+    path('api.devpulse/delete-project', views.deleteProject),
     path('api.devpulse/get-history',views.fetchHistory),
     path('devpulse/login', views.login_page, name='login'),
     path('api.devpulse/signup-login', views.signupLogin),
